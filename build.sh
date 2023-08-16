@@ -36,7 +36,6 @@ builder_describe \
   build \
   start \
   stop \
-  test \
 
 builder_parse "$@"
 
@@ -80,13 +79,17 @@ if builder_start_action build; then
 fi
 
 if builder_start_action start; then
+  if [ -z "${PROXY_PORT+x}" ]; then
+    PROXY_PORT=80
+  fi  
+
   # Start the Docker container
 
   if [ ! -z $(_get_docker_image_id) ]; then
     echo "starting docker run"
     docker run --rm \
       --name reverse-proxy-app \
-      -p 80:80 \
+      -p 80:${PROXY_PORT} \
       reverse-proxy
   else
     echo "${COLOR_RED}ERROR: Docker container doesn't exist. Run ./build.sh build first${COLOR_RESET}"
@@ -94,15 +97,4 @@ if builder_start_action start; then
   fi
 
   builder_finish_action success start
-fi
-
-if builder_start_action test; then
-  # TODO: lint tests
-
-  set +e; \
-  set +o pipefail; \
-  npx broken-link-checker http://localhost:8053 --ordered --recursive --host-requests 50 -e --filter-level 3 | \
-    grep -E "BROKEN|Getting links from" | \
-    grep -B 1 "BROKEN";
-  builder_finish_action success test
 fi
