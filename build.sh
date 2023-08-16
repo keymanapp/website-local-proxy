@@ -87,8 +87,17 @@ if builder_start_action start; then
 
   if [ ! -z $(_get_docker_image_id) ]; then
     echo "starting docker run"
+    ADD_HOST=
+    if [[ $OSTYPE =~ linux-gnu ]]; then
+      # Linux needs --add-host parameter
+      ADD_HOST="--add-host host.docker.internal:host-gateway"
+    fi
+    echo "ADD_HOST: ${ADD_HOST}"
+
+#       --add-host host.docker.internal:host-gateway \
     docker run --rm \
       --name reverse-proxy-app \
+      ${ADD_HOST} \
       -p 80:${PROXY_PORT} \
       reverse-proxy
   else
