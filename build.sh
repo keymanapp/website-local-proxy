@@ -101,7 +101,7 @@ if builder_start_action start; then
       -p 80:${PROXY_PORT} \
       reverse-proxy
   else
-    echo "${COLOR_RED}ERROR: Docker container doesn't exist. Run ./build.sh build first${COLOR_RESET}"
+    builder_die "ERROR: Docker container doesn't exist. Run ./build.sh build first"
     builder_finish_action fail start
   fi
 
