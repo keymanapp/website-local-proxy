@@ -1,4 +1,4 @@
-# Using reverse-proxy
+# Using website-local-proxy
 
 This is a reverse proxy to handle the port-forwarding of the various locally-hosted Keyman sites. Assuming the corresponding sites already already running, the proxy can be started with the command-line:
 ```bash
