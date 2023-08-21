@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Setup nginx reverse proxty via Docker.
+# Setup nginx reverse proxy via Docker.
 #
 set -eu
 
