@@ -12,6 +12,7 @@ Once the reverse proxy is started, you can browse to locally hosted Keyman sites
 * http://help.keyman.com.localhost
 * http://keyman.com.localhost
 * http://keymanweb.com.localhost
+* http://s.keyman.com.localhost
 
 ## Pre-requisites
 On the host machine, install [Docker](https://docs.docker.com/get-docker/).
