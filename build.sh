@@ -95,7 +95,7 @@ if builder_start_action start; then
     echo "ADD_HOST: ${ADD_HOST}"
 
 #       --add-host host.docker.internal:host-gateway \
-    docker run --rm \
+    docker run -d --rm \
       --name reverse-proxy-app \
       ${ADD_HOST} \
       -p 80:${PROXY_PORT} \
