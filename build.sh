@@ -2,8 +2,6 @@
 #
 # Setup nginx reverse proxy via Docker.
 #
-set -eu
-
 ## START STANDARD BUILD SCRIPT INCLUDE
 # adjust relative paths as necessary
 THIS_SCRIPT="$(greadlink -f "${BASH_SOURCE[0]}" 2>/dev/null || readlink -f "${BASH_SOURCE[0]}")"
@@ -21,7 +19,7 @@ function _get_docker_container_id() {
 }
 
 function _stop_docker_container() {
-  KEYMAN_CONTAINER=$(_get_docker_container_id)
+  local KEYMAN_CONTAINER=$(_get_docker_container_id)
   if [ ! -z "$KEYMAN_CONTAINER" ]; then
     docker container stop $KEYMAN_CONTAINER
   else
@@ -42,10 +40,7 @@ builder_parse "$@"
 # This script runs from its own folder
 cd "$REPO_ROOT"
 
-if builder_start_action configure; then
-  # Nothing to do
-  builder_finish_action success configure
-fi
+builder_run_action configure true # nothing to do
 
 if builder_start_action clean; then
   # Stop and cleanup Docker containers and images used for the site
