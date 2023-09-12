@@ -14,5 +14,11 @@ Once the reverse proxy is started, you can browse to locally hosted Keyman sites
 * http://keymanweb.com.localhost
 * http://s.keyman.com.localhost
 
+Sometimes, nginx hosts a page on reboot which can interfere with the port availability.
+You can try disabling the nginx page with
+```bash
+sudo service nginx stop
+```
+
 ## Pre-requisites
 On the host machine, install [Docker](https://docs.docker.com/get-docker/).
