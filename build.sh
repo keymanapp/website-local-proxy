@@ -10,16 +10,21 @@ THIS_SCRIPT="$(greadlink -f "${BASH_SOURCE[0]}" 2>/dev/null || readlink -f "${BA
 
 ################################ Main script ################################
 
-function _get_docker_image_id() {
+# This script runs from its own folder
+cd "$REPO_ROOT"
+
+builder_parse "$@"
+
+function get_docker_image_id() {
   echo "$(docker images -q reverse-proxy)"
 }
 
-function _get_docker_container_id() {
+function get_docker_container_id() {
   echo "$(docker ps -a -q --filter ancestor=reverse-proxy)"
 }
 
-function _stop_docker_container() {
-  local KEYMAN_CONTAINER=$(_get_docker_container_id)
+function stop_docker_container() {
+  local KEYMAN_CONTAINER=$(get_docker_container_id)
   if [ ! -z "$KEYMAN_CONTAINER" ]; then
     docker container stop $KEYMAN_CONTAINER
   else
@@ -35,25 +40,20 @@ builder_describe \
   start \
   stop \
 
-builder_parse "$@"
-
-# This script runs from its own folder
-cd "$REPO_ROOT"
-
 builder_run_action configure true # nothing to do
 
 if builder_start_action clean; then
   # Stop and cleanup Docker containers and images used for the site
-  _stop_docker_container
+  stop_docker_container
 
-  KEYMAN_CONTAINER=$(_get_docker_container_id)
+  KEYMAN_CONTAINER=$(get_docker_container_id)
   if [ ! -z "$KEYMAN_CONTAINER" ]; then
     docker container rm $KEYMAN_CONTAINER
   else
     echo "No Docker container to clean"
   fi
     
-  KEYMAN_IMAGE=$(_get_docker_image_id)
+  KEYMAN_IMAGE=$(get_docker_image_id)
   if [ ! -z "$KEYMAN_IMAGE" ]; then
     docker rmi reverse-proxy
   else 
@@ -64,7 +64,7 @@ if builder_start_action clean; then
 fi
 
 # Stop the Docker container
-builder_run_action stop _stop_docker_container
+builder_run_action stop stop_docker_container
 
 if builder_start_action build; then
   # Download docker image. --mount option requires BuildKit  
@@ -74,31 +74,29 @@ if builder_start_action build; then
 fi
 
 if builder_start_action start; then
-  if [ -z "${PROXY_PORT+x}" ]; then
-    PROXY_PORT=80
+  if [ -z "${KEYMAN_COM_PROXY_PORT+x}" ]; then
+    KEYMAN_COM_PROXY_PORT=80
   fi  
 
   # Start the Docker container
 
-  if [ ! -z $(_get_docker_image_id) ]; then
-    echo "starting docker run"
-    ADD_HOST=
-    if [[ $OSTYPE =~ linux-gnu ]]; then
-      # Linux needs --add-host parameter
-      ADD_HOST="--add-host host.docker.internal:host-gateway"
-    fi
-    echo "ADD_HOST: ${ADD_HOST}"
-
-#       --add-host host.docker.internal:host-gateway \
-    docker run -d --rm \
-      --name reverse-proxy-app \
-      ${ADD_HOST} \
-      -p 80:${PROXY_PORT} \
-      reverse-proxy
-  else
+ if [ -z $(_get_docker_image_id) ]; then
     builder_die "ERROR: Docker container doesn't exist. Run ./build.sh build first"
-    builder_finish_action fail start
   fi
+
+  echo "starting docker run"
+  ADD_HOST=
+  if [[ $OSTYPE =~ linux-gnu ]]; then
+    # Linux needs --add-host parameter
+    ADD_HOST="--add-host host.docker.internal:host-gateway"
+  fi
+  echo "ADD_HOST: ${ADD_HOST}"
+
+  docker run -d --rm \
+    --name reverse-proxy-app \
+    ${ADD_HOST} \
+    -p 80:${KEYMAN_COM_PROXY_PORT} \
+    reverse-proxy
 
   builder_finish_action success start
 fi

@@ -5,7 +5,7 @@ This is a reverse proxy to handle the port-forwarding of the various locally-hos
 build.sh build start
 ```
 
-If you want the host to use a port other than 80, set the environment variable `PROXY_PORT` to the port number.
+If you want the host to use a port other than 80, set the environment variable `KEYMAN_COM_PROXY_PORT` to the port number.
 
 Once the reverse proxy is started, you can browse to locally hosted Keyman sites like the following:
 * http://api.keyman.com.localhost
