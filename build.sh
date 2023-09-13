@@ -13,6 +13,14 @@ THIS_SCRIPT="$(greadlink -f "${BASH_SOURCE[0]}" 2>/dev/null || readlink -f "${BA
 # This script runs from its own folder
 cd "$REPO_ROOT"
 
+builder_describe \
+  "Setup nginx reverse proxy site to run via Docker." \
+  configure \
+  clean \
+  build \
+  start \
+  stop \
+
 builder_parse "$@"
 
 function get_docker_image_id() {
@@ -32,14 +40,6 @@ function stop_docker_container() {
   fi
 }
 
-builder_describe \
-  "Setup nginx reverse proxy site to run via Docker." \
-  configure \
-  clean \
-  build \
-  start \
-  stop \
-
 builder_run_action configure true # nothing to do
 
 if builder_start_action clean; then
@@ -55,7 +55,7 @@ if builder_start_action clean; then
     
   KEYMAN_IMAGE=$(get_docker_image_id)
   if [ ! -z "$KEYMAN_IMAGE" ]; then
-    docker rmi reverse-proxy
+    docker rmi $KEYMAN_IMAGE
   else 
     echo "No Docker image to clean"
   fi
@@ -80,7 +80,7 @@ if builder_start_action start; then
 
   # Start the Docker container
 
- if [ -z $(_get_docker_image_id) ]; then
+ if [ -z $(get_docker_image_id) ]; then
     builder_die "ERROR: Docker container doesn't exist. Run ./build.sh build first"
   fi
 
