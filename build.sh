@@ -80,7 +80,7 @@ if builder_start_action start; then
 
   # Start the Docker container
 
- if [ -z $(get_docker_image_id) ]; then
+  if [ -z $(get_docker_image_id) ]; then
     builder_die "ERROR: Docker container doesn't exist. Run ./build.sh build first"
   fi
 
