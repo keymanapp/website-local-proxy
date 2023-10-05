@@ -1,17 +1,23 @@
 #!/usr/bin/env bash
-#
-# Setup nginx reverse proxy via Docker.
-#
-## START STANDARD BUILD SCRIPT INCLUDE
-# adjust relative paths as necessary
-THIS_SCRIPT="$(greadlink -f "${BASH_SOURCE[0]}" 2>/dev/null || readlink -f "${BASH_SOURCE[0]}")"
-. "$(dirname "$THIS_SCRIPT")/resources/builder.inc.sh"
-## END STANDARD BUILD SCRIPT INCLUDE
+## START STANDARD SITE BUILD SCRIPT INCLUDE
+readonly THIS_SCRIPT="$(readlink -f "${BASH_SOURCE[0]}")"
+readonly BOOTSTRAP="$(dirname "$THIS_SCRIPT")/resources/bootstrap.inc.sh"
+readonly BOOTSTRAP_VERSION=v0.3
+[ -f "$BOOTSTRAP" ] && source "$BOOTSTRAP" || source <(curl -fs https://raw.githubusercontent.com/keymanapp/shared-sites/$BOOTSTRAP_VERSION/bootstrap.inc.sh)
+## END STANDARD SITE BUILD SCRIPT INCLUDE
 
-################################ Main script ################################
+readonly PROXY_CONTAINER_NAME=local-proxy-website
+readonly PROXY_CONTAINER_DESC=local-proxy-app
+readonly PROXY_IMAGE_NAME=local-proxy-website
+
+source _common/keyman-local-ports.inc.sh
+source _common/docker.inc.sh
 
 # This script runs from its own folder
 cd "$REPO_ROOT"
+
+################################ Main script ################################
+
 
 builder_describe \
   "Setup nginx reverse proxy site to run via Docker." \
@@ -23,64 +29,20 @@ builder_describe \
 
 builder_parse "$@"
 
-function get_docker_image_id() {
-  echo "$(docker images -q reverse-proxy)"
-}
-
-function get_docker_container_id() {
-  echo "$(docker ps -a -q --filter ancestor=reverse-proxy)"
-}
-
-function stop_docker_container() {
-  local KEYMAN_CONTAINER=$(get_docker_container_id)
-  if [ ! -z "$KEYMAN_CONTAINER" ]; then
-    docker container stop $KEYMAN_CONTAINER
-  else
-    echo "No Docker container to stop"
-  fi
-}
-
-builder_run_action configure true # nothing to do
-
-if builder_start_action clean; then
-  # Stop and cleanup Docker containers and images used for the site
-  stop_docker_container
-
-  KEYMAN_CONTAINER=$(get_docker_container_id)
-  if [ ! -z "$KEYMAN_CONTAINER" ]; then
-    docker container rm $KEYMAN_CONTAINER
-  else
-    echo "No Docker container to clean"
-  fi
-    
-  KEYMAN_IMAGE=$(get_docker_image_id)
-  if [ ! -z "$KEYMAN_IMAGE" ]; then
-    docker rmi $KEYMAN_IMAGE
-  else 
-    echo "No Docker image to clean"
-  fi
-
-  builder_finish_action success clean
-fi
-
-# Stop the Docker container
-builder_run_action stop stop_docker_container
-
-if builder_start_action build; then
-  # Download docker image. --mount option requires BuildKit  
-  DOCKER_BUILDKIT=1 docker build -t reverse-proxy .
-
-  builder_finish_action success build
-fi
+builder_run_action configure bootstrap_configure
+builder_run_action clean     clean_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME
+builder_run_action stop      stop_docker_container  $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME
+builder_run_action build     build_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME
+#builder_run_action start     start_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME $PROXY_CONTAINER_DESC
 
 if builder_start_action start; then
   if [ -z "${KEYMAN_COM_PROXY_PORT+x}" ]; then
     KEYMAN_COM_PROXY_PORT=80
-  fi  
+  fi
 
   # Start the Docker container
 
-  if [ -z $(get_docker_image_id) ]; then
+  if [ -z $(get_docker_image_id $PROXY_IMAGE_NAME) ]; then
     builder_die "ERROR: Docker container doesn't exist. Run ./build.sh build first"
   fi
 
@@ -93,10 +55,10 @@ if builder_start_action start; then
   echo "ADD_HOST: ${ADD_HOST}"
 
   docker run -d --rm \
-    --name reverse-proxy-app \
+    --name $PROXY_CONTAINER_DESC \
     ${ADD_HOST} \
     -p 80:${KEYMAN_COM_PROXY_PORT} \
-    reverse-proxy
+    $PROXY_CONTAINER_NAME
 
   builder_finish_action success start
 fi
