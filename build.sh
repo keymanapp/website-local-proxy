@@ -9,6 +9,7 @@ readonly BOOTSTRAP_VERSION=v0.3
 readonly PROXY_CONTAINER_NAME=local-proxy-website
 readonly PROXY_CONTAINER_DESC=local-proxy-app
 readonly PROXY_IMAGE_NAME=local-proxy-website
+readonly HOST_PROXY=local-proxy-website.localhost
 
 source _common/keyman-local-ports.inc.sh
 source _common/docker.inc.sh
@@ -33,32 +34,4 @@ builder_run_action configure bootstrap_configure
 builder_run_action clean     clean_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME
 builder_run_action stop      stop_docker_container  $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME
 builder_run_action build     build_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME
-#builder_run_action start     start_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME $PROXY_CONTAINER_DESC
-
-if builder_start_action start; then
-  if [ -z "${KEYMAN_COM_PROXY_PORT+x}" ]; then
-    KEYMAN_COM_PROXY_PORT=80
-  fi
-
-  # Start the Docker container
-
-  if [ -z $(get_docker_image_id $PROXY_IMAGE_NAME) ]; then
-    builder_die "ERROR: Docker container doesn't exist. Run ./build.sh build first"
-  fi
-
-  echo "starting docker run"
-  ADD_HOST=
-  if [[ $OSTYPE =~ linux-gnu ]]; then
-    # Linux needs --add-host parameter
-    ADD_HOST="--add-host host.docker.internal:host-gateway"
-  fi
-  echo "ADD_HOST: ${ADD_HOST}"
-
-  docker run -d --rm \
-    --name $PROXY_CONTAINER_DESC \
-    ${ADD_HOST} \
-    -p 80:${KEYMAN_COM_PROXY_PORT} \
-    $PROXY_CONTAINER_NAME
-
-  builder_finish_action success start
-fi
+builder_run_action start     start_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME $PROXY_CONTAINER_DESC $HOST_PROXY 80
