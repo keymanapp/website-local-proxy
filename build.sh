@@ -37,5 +37,5 @@ builder_parse "$@"
 builder_run_action configure bootstrap_configure
 builder_run_action clean     clean_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME
 builder_run_action stop      stop_docker_container  $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME
-builder_run_action build     build_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME
-builder_run_action start     start_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME $PROXY_CONTAINER_DESC $HOST_PROXY 80
+builder_run_action build     build_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME $BUILDER_CONFIGURATION
+builder_run_action start     start_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME $PROXY_CONTAINER_DESC $HOST_PROXY 80 $BUILDER_CONFIGURATION

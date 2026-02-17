@@ -5,3 +5,7 @@ resources/.bootstrap-version
 resources/.bootstrap-registry
 _common/
 
+# State files
+_control/debug
+_control/release
+_control/ready
