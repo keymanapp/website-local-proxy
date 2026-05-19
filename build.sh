@@ -31,11 +31,29 @@ builder_describe \
   build \
   start \
   stop \
+  list \
 
 builder_parse "$@"
+
+function list_sites() {
+  builder_echo "The following sites may be proxied:"
+  local item items
+  # read -a items= <()
+  items=($(grep server_name resources/nginx.conf))
+  items=($(printf -- '%s\n' "${items[@]}" | grep localhost))
+  for item in "${items[@]}"; do
+    builder_echo "  http://${item}"
+  done
+}
+
+function do_start() {
+  start_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME $PROXY_CONTAINER_DESC $HOST_PROXY 80 $BUILDER_CONFIGURATION
+  list_sites
+}
 
 builder_run_action configure bootstrap_configure
 builder_run_action clean     clean_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME
 builder_run_action stop      stop_docker_container  $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME
 builder_run_action build     build_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME $BUILDER_CONFIGURATION
-builder_run_action start     start_docker_container $PROXY_IMAGE_NAME $PROXY_CONTAINER_NAME $PROXY_CONTAINER_DESC $HOST_PROXY 80 $BUILDER_CONFIGURATION
+builder_run_action start     do_start
+builder_run_action list      list_sites
